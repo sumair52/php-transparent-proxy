@@ -12,6 +12,7 @@ Really though, I do this only to have a wiki page. If you need this proxy, you p
 
 The main reason for the existence of this proxy is to use it for cross-domain HTTP POST ajax calls using jQuery, so this is currently the only example I have for you. This code assumes you've already loaded jquery on your page (d'uh!).
 
+=== POST Example ===
 The example itself loads from a PHP backend and checks whether the user is logged on (uses the PHPSESSID cookie automatically, which explains cookie support!), and sets some local javascript variables.
 
 {{{
@@ -35,5 +36,19 @@ $.ajax({
    fullName = data.response[0].userFullName;
   }
  }	
+});
+}}}
+
+=== GET Example ===
+This example loads some global parameters from my backend (such as translated strings and menu items from a database). As you can see, any ajax query or function should work fine.
+
+{{{
+$.getJSON("/common/proxy.php",{action: 'getglobals', suite:whichSuite, soft:whichGuide}, function(data) {
+ $("#versionLabel").html(data.globals.versionLabel[0][currentLang]);
+ $("#lastUpdateLabel").html(data.globals.lastUpdLabel[0][currentLang]);
+ var ip = data.globals.visitorInfo[0]['ip'];
+ $.each(data.globals.docs, function(i,item) {
+  // here I add each item to a menu UL.
+ }
 });
 }}}
