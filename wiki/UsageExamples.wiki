@@ -1,0 +1,39 @@
+#summary Provides examples for use.
+#labels example,usage,Documentation
+
+= Introduction =
+
+This page provides some example for using this proxy from different locations. Please do not hesitate to let me know if you've successfully used the proxy by some other method as well as a code example for it.
+
+Really though, I do this only to have a wiki page. If you need this proxy, you probably know how to make an HTTP Request and you don't need me to show you!
+
+
+== Calling from jQuery with .ajax() ==
+
+The main reason for the existence of this proxy is to use it for cross-domain HTTP POST ajax calls using jQuery, so this is currently the only example I have for you. This code assumes you've already loaded jquery on your page (d'uh!).
+
+The example itself loads from a PHP backend and checks whether the user is logged on (uses the PHPSESSID cookie automatically, which explains cookie support!), and sets some local javascript variables.
+
+{{{
+$.ajaxSetup({
+ url: '/path/to/proxy.php',
+ contentType:"application/x-www-form-urlencoded",
+ type:"POST",
+ cache:false,
+ dataType:"json",
+});
+
+$.ajax({
+ data:{ action:'checkLogon' },
+ success:function(data) {
+  if(data.response[0].answer === 'true') {
+   loggedin = true;
+   isAdmin = data.response[0].isAdmin;
+   if(isAdmin) {
+    loadJS("admintools.js");
+   }
+   fullName = data.response[0].userFullName;
+  }
+ }	
+});
+}}}
