@@ -73,7 +73,6 @@ function proxy_request($url, $data, $method) {
 		$myCount = 0;
    		$requestHeaders = apache_request_headers();
 		while ((list($header, $value) = each($requestHeaders))) {
-			$logtext = "$header with value $value";
 			if($header !== "Connection" && $header !== "Host")
 				fputs($fp, "$header: $value\r\n");
 			$myCount = $myCount + 1;
