@@ -39,7 +39,8 @@ if($domainName == $RequestDomain) {
 }
 
 function proxy_request($url, $data, $method) {
-// Based on post_request() from http://www.jonasjohn.de/snippets/php/post-request.htm
+// Based on post_request from http://www.jonasjohn.de/snippets/php/post-request.htm
+// Heavly modified since then, though.
 
 	// Convert the data array into URL Parameters like a=b&foo=bar etc.
 	$data = http_build_query($data);
@@ -66,19 +67,17 @@ function proxy_request($url, $data, $method) {
 			fputs($fp, "GET $path?$data HTTP/1.1\r\n");
 		}
 		fputs($fp, "Host: $host\r\n");
-		//fputs($fp, "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7\r\n"); 
+		fputs($fp, "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7\r\n"); 
 		if($method == "POST")
-			fputs($fp, "Content-type: application/x-www-form-urlencoded\r\n");
-			fputs($fp, "Content-length: ". strlen($data) ."\r\n");
-		$cookieString = '';
-		$isFirst = true;
- 		foreach($_COOKIE as $cookie_name => $cookie_value){
-			if(!$isFirst)
-				$cookieString .= "; ";
-			$cookieString .= "$cookie_name=$cookie_value";
-			$isFirst = false;
+		
+		$myCount = 0;
+   		$requestHeaders = apache_request_headers();
+		while ((list($header, $value) = each($requestHeaders))) {
+			$logtext = "$header with value $value";
+			if($header !== "Connection" && $header !== "Host")
+				fputs($fp, "$header: $value\r\n");
+			$myCount = $myCount + 1;
 		}
-		fputs($fp, "Cookie: $cookieString\r\n");
 		fputs($fp, "Connection: close\r\n\r\n");
 		fputs($fp, $data);
  
@@ -111,4 +110,5 @@ function proxy_request($url, $data, $method) {
 		'content' => $content
 	);
 }
+
 ?>
