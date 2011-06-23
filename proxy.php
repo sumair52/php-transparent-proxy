@@ -46,7 +46,7 @@ $host = $matches[1];
 preg_match('/[^.]+\.[^.]+$/', $host, $matches);
 $domainName = "{$matches[0]}";
 
-//if($domainName == $RequestDomain) {
+if($domainName == $RequestDomain) {
 
  	$method = $_SERVER['REQUEST_METHOD'];
 	$response = proxy_request($destinationURL, ($method == "GET" ? $_GET : $_POST), $method);
@@ -57,11 +57,11 @@ $domainName = "{$matches[0]}";
 	}
 	echo $response[content];
  
-/*  } else {
+  } else {
 
 	echo "HTTP Referer is not recognized. Cancelling all actions";
 
-} */
+  }
 
 function proxy_request($url, $data, $method) {
 // Based on post_request from http://www.jonasjohn.de/snippets/php/post-request.htm
