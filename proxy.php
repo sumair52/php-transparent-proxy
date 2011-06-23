@@ -15,35 +15,60 @@ $RequestDomain = 'mydomain.com';
 
 // That's it for configuration!
 
+if(!function_exists('apache_request_headers')) {
+// Function is from: http://www.electrictoolbox.com/php-get-headers-sent-from-browser/
+    function apache_request_headers() {
+        $headers = array();
+        foreach($_SERVER as $key => $value) {
+            if(substr($key, 0, 5) == 'HTTP_') {
+                $headers[str_replace(' ', '-', ucwords(str_replace('_', ' ', strtolower(substr($key, 5)))))] = $value;
+            }
+        }
+        return $headers;
+    }
+}
+
+// Figure out requester's IP to shipt it to X-Forwarded-For
+$ip = '';
+if (!empty($_SERVER['HTTP_CLIENT_IP'])) { 
+	$ip = $_SERVER['HTTP_CLIENT_IP'];
+	//echo "HTTP_CLIENT_IP: ".$ip;
+} elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+	$ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+	//echo "HTTP_X_FORWARDED_FOR: ".$ip;
+} else {
+	$ip = $_SERVER['REMOTE_ADDR'];
+	//echo "REMOTE_ADDR: ".$ip;
+}
+
 preg_match('@^(?:http://)?([^/]+)@i', $_SERVER['HTTP_REFERER'], $matches);
 $host = $matches[1];
 preg_match('/[^.]+\.[^.]+$/', $host, $matches);
 $domainName = "{$matches[0]}";
 
-if($domainName == $RequestDomain) {
+//if($domainName == $RequestDomain) {
 
-	$method = $_SERVER['REQUEST_METHOD'];
+ 	$method = $_SERVER['REQUEST_METHOD'];
 	$response = proxy_request($destinationURL, ($method == "GET" ? $_GET : $_POST), $method);
 	$headerArray = explode("\r\n", $response[header]);
 
 	foreach($headerArray as $headerLine) {
 	 header($headerLine);
 	}
-
 	echo $response[content];
  
- } else {
+/*  } else {
 
 	echo "HTTP Referer is not recognized. Cancelling all actions";
 
-}
+} */
 
 function proxy_request($url, $data, $method) {
 // Based on post_request from http://www.jonasjohn.de/snippets/php/post-request.htm
-// Heavly modified since then, though.
-
+	global $ip;
 	// Convert the data array into URL Parameters like a=b&foo=bar etc.
 	$data = http_build_query($data);
+	$datalength = strlen($data);
  
 	// parse the given URL
 	$url = parse_url($url);
@@ -67,15 +92,17 @@ function proxy_request($url, $data, $method) {
 			fputs($fp, "GET $path?$data HTTP/1.1\r\n");
 		}
 		fputs($fp, "Host: $host\r\n");
-		fputs($fp, "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7\r\n"); 
-		if($method == "POST")
 		
-		$myCount = 0;
+		fputs($fp, "X-Forwarded-For: $ip\r\n");
+		fputs($fp, "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7\r\n"); 
+		
    		$requestHeaders = apache_request_headers();
 		while ((list($header, $value) = each($requestHeaders))) {
-			if($header !== "Connection" && $header !== "Host")
+			if($header == "Content-Length") {
+				fputs($fp, "Content-Length: $datalength\r\n");
+			} else if($header !== "Connection" && $header !== "Host" && $header !== "Content-length") {
 				fputs($fp, "$header: $value\r\n");
-			$myCount = $myCount + 1;
+			}
 		}
 		fputs($fp, "Connection: close\r\n\r\n");
 		fputs($fp, $data);
